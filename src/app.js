@@ -1,14 +1,13 @@
 import express from "express";
 import { createServer } from "node:http";
-
 import { Server } from "socket.io";
-
 import mongoose from "mongoose";
 import { connectToSocket } from "./controllers/socketManager.js";
-
 import cors from "cors";
 import userRoutes from "./routes/users.routes.js";
+import dotenv from "dotenv";
 
+dotenv.config();
 const app = express();
 const server = createServer(app);
 const io = connectToSocket(server);
@@ -22,14 +21,17 @@ app.use("/api/v1/users", userRoutes);
 
 const start = async () => {
   app.set("mongo_user");
-  const connectionDb = await mongoose.connect(
-    "mongodb+srv://sreeyaedu:Education@cluster0.lbe1m7s.mongodb.net/"
-  );
+  try {
+    const connectionDb = await mongoose.connect(process.env.MONGO_URI);
+    console.log(` MONGO Connected. Host: ${connectionDb.connection.host}`);
 
-  console.log(`MONGO Connected DB HOst: ${connectionDb.connection.host}`);
-  server.listen(app.get("port"), () => {
-    console.log("LISTENIN ON PORT 8000");
-  });
+    server.listen(PORT, () => {
+      console.log(`🚀 Server running on port ${PORT}`);
+    });
+  } catch (err) {
+    console.error("❌ Error connecting to MongoDB:", err.message);
+    process.exit(1); // Stop the server if DB connection fails
+  }
 };
 
 start();
